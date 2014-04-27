@@ -589,6 +589,7 @@ int main(int ac, char **av)
                                 exit(1);
                         }
                 }
+#if 0
 		name = getenv("KCONFIG_VARIANT");
 		printf("KCONFIG_VARIANT(%s)\n", name);
 		if (name) {
@@ -604,6 +605,7 @@ int main(int ac, char **av)
 				"***\n"));
 		exit(1);
 		}
+#endif
 		name = getenv("KCONFIG_DEBUG");
 		printf("KCONFIG_DEBUG(%s)\n", name);
 		if (name) {
