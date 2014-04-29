@@ -41,6 +41,9 @@
 #ifdef CONFIG_SEC_DEBUG
 #include <mach/sec_debug.h>
 #endif
+#ifdef CONFIG_ANDROID_PERSISTENT_RAM
+#include <linux/persistent_ram.h>
+#endif
 #include <mach/rpm-regulator-smd.h>
 #include <mach/socinfo.h>
 #include <mach/msm_smem.h>
@@ -310,6 +313,37 @@ static struct memtype_reserve msm8974_reserve_table[] __initdata = {
 	},
 };
 
+#ifdef CONFIG_ANDROID_PERSISTENT_RAM
+/* CONFIG_SEC_DEBUG reserving memory for persistent RAM*/
+#define RAMCONSOLE_PHYS_ADDR 0x1FB00000
+static struct persistent_ram_descriptor per_ram_descs[] __initdata = {
+       {
+               .name = "ram_console",
+               .size = SZ_1M,
+       }
+};
+
+static struct persistent_ram per_ram __initdata = {
+       .descs = per_ram_descs,
+       .num_descs = ARRAY_SIZE(per_ram_descs),
+       .start = RAMCONSOLE_PHYS_ADDR,
+       .size = SZ_1M
+};
+
+static struct resource ram_console_resource[] = {
+	{
+		.flags	= IORESOURCE_MEM,
+	}
+};
+
+static struct platform_device ram_console_device = {
+	.name = "ram_console",
+	.id = -1,
+	.num_resources  = ARRAY_SIZE(ram_console_resource),
+	.resource       = ram_console_resource,
+};
+#endif
+
 static int msm8974_paddr_to_memtype(phys_addr_t paddr)
 {
 	return MEMTYPE_EBI1;
@@ -325,6 +359,9 @@ void __init msm_8974_reserve(void)
 	reserve_info = &msm8974_reserve_info;
 	of_scan_flat_dt(dt_scan_for_memory_reserve, msm8974_reserve_table);
 	msm_reserve();
+#ifdef CONFIG_ANDROID_PERSISTENT_RAM
+	persistent_ram_early_init(&per_ram);
+#endif
 }
 
 static void __init msm8974_early_memory(void)
@@ -453,6 +490,10 @@ void __init msm8974_init(void)
 
 #ifdef CONFIG_SEC_DEBUG
 	sec_debug_init();
+#endif
+
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
+	platform_device_register(&ram_console_device);
 #endif
 
 #ifdef CONFIG_PROC_AVC
